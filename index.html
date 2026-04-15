@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сценарий диалога B2C — Зарплатный проект</title>
+<style>
+  :root {
+    --sber-green: #21A038;
+    --sber-green-dark: #1a8a2e;
+    --sber-green-light: #e8f5e9;
+    --sber-green-bg: #f0faf1;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    --blue-info: #e3f2fd;
+    --blue-info-border: #90caf9;
+    --blue-info-text: #1565c0;
+    --orange-warn: #fff3e0;
+    --orange-warn-border: #ffcc80;
+    --orange-warn-text: #e65100;
+    --red-soft: #ffebee;
+    --red-soft-border: #ef9a9a;
+    --red-soft-text: #c62828;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, var(--sber-green) 0%, var(--sber-green-dark) 100%);
+    color: white;
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-subtitle { font-size: 13px; opacity: 0.85; }
+  .header-controls { display: flex; align-items: center; gap: 8px; }
+  .btn-reset {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-reset:hover { background: rgba(255,255,255,0.3); }
+  .step-counter {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .progress-bar { height: 3px; background: rgba(255,255,255,0.2); position: relative; }
+  .progress-fill {
+    height: 100%;
+    background: rgba(255,255,255,0.7);
+    transition: width 0.5s ease;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ===== TAB BAR ===== */
+  .tab-bar {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-500);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-btn:hover { color: var(--gray-700); }
+  .tab-btn.active {
+    color: var(--sber-green-dark);
+    border-bottom-color: var(--sber-green);
+  }
+  .tab-icon { font-size: 16px; }
+
+  /* ===== BREADCRUMBS ===== */
+  .breadcrumbs-bar {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .breadcrumbs-bar::-webkit-scrollbar { height: 4px; }
+  .breadcrumbs-bar::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+  .breadcrumbs-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+  }
+  .crumb {
+    color: var(--sber-green);
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+  .crumb:hover { background: var(--sber-green-light); }
+  .crumb.active { color: var(--gray-700); font-weight: 600; cursor: default; }
+  .crumb.active:hover { background: transparent; }
+  .crumb-sep { color: var(--gray-400); flex-shrink: 0; font-size: 11px; }
+
+  /* ===== MAIN ===== */
+  .main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ===== STEP CARD ===== */
+  .step-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeIn 0.35s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .step-badge-row { padding: 20px 24px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .step-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--sber-green-light); color: var(--sber-green-dark);
+    font-size: 12px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .step-badge.objection { background: var(--orange-warn); color: var(--orange-warn-text); }
+  .step-badge.ending { background: var(--red-soft); color: var(--red-soft-text); }
+  .step-badge.success { background: #e8f5e9; color: #2e7d32; }
+  .step-ref { font-size: 12px; color: var(--gray-500); }
+  .step-title { padding: 12px 24px 0; font-size: 20px; font-weight: 700; color: var(--gray-900); }
+
+  /* ===== SPEECH ===== */
+  .speech-block {
+    margin: 16px 24px; background: var(--sber-green-bg);
+    border-left: 4px solid var(--sber-green);
+    border-radius: 0 8px 8px 0; padding: 16px 20px;
+  }
+  .speech-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--sber-green-dark); margin-bottom: 6px;
+  }
+  .speech-text { font-size: 15px; color: var(--gray-800); white-space: pre-line; }
+
+  /* ===== COMMENTS ===== */
+  .comments-section { padding: 0 24px 16px; }
+  .comment-bubble {
+    background: var(--blue-info); border: 1px solid var(--blue-info-border);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;
+    font-size: 13px; color: var(--blue-info-text);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .comment-bubble.warn {
+    background: var(--orange-warn); border-color: var(--orange-warn-border); color: var(--orange-warn-text);
+  }
+  .comment-icon {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    background: rgba(21, 101, 192, 0.15); color: var(--blue-info-text);
+  }
+  .comment-bubble.warn .comment-icon { background: rgba(230,81,0,0.15); color: var(--orange-warn-text); }
+  .comment-text { flex: 1; line-height: 1.5; }
+
+  /* ===== ANSWERS ===== */
+  .answers-section { padding: 0 24px 24px; }
+  .answers-label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--gray-500); margin-bottom: 10px;
+  }
+  .answers-grid { display: flex; flex-direction: column; gap: 8px; }
+  .answer-btn {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    text-align: left; background: white; border: 2px solid var(--gray-200);
+    border-radius: 10px; padding: 14px 18px; font-size: 15px;
+    color: var(--gray-800); cursor: pointer; transition: var(--transition); line-height: 1.4;
+  }
+  .answer-btn:hover { border-color: var(--sber-green); background: var(--sber-green-bg); }
+  .answer-btn:active { transform: scale(0.985); }
+  .answer-btn .arrow {
+    margin-left: auto; color: var(--gray-400); transition: var(--transition);
+    flex-shrink: 0; font-size: 18px;
+  }
+  .answer-btn:hover .arrow { color: var(--sber-green); transform: translateX(3px); }
+  .answer-emoji { font-size: 20px; flex-shrink: 0; }
+
+  /* ===== OBJECTIONS ===== */
+  .objections-section { border-top: 1px solid var(--gray-200); padding: 20px 24px 24px; }
+  .objections-header {
+    font-size: 14px; font-weight: 700; color: var(--gray-700);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .objection-item { border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+  .objection-trigger {
+    width: 100%; text-align: left; background: var(--gray-50); border: none;
+    padding: 12px 16px; font-size: 14px; font-weight: 500; color: var(--gray-700);
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; transition: var(--transition);
+  }
+  .objection-trigger:hover { background: var(--gray-100); }
+  .objection-trigger .chevron { transition: var(--transition); font-size: 12px; color: var(--gray-400); }
+  .objection-trigger.open .chevron { transform: rotate(180deg); }
+  .objection-body {
+    display: none; padding: 12px 16px 16px; font-size: 14px;
+    line-height: 1.6; background: white; border-top: 1px solid var(--gray-200);
+  }
+  .objection-body.open { display: block; }
+  .objection-body .speech-block { margin: 8px 0; padding: 12px 16px; }
+  .objection-body .answer-btn { margin-top: 8px; padding: 10px 14px; font-size: 14px; }
+
+  /* ===== ESCALATION (global no-answer button) ===== */
+  .escalation-section {
+    border-top: 1px solid var(--gray-200); padding: 20px 24px 24px;
+  }
+  .btn-escalation {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    text-align: left; background: #fff8f0; border: 2px dashed #f57c00;
+    border-radius: 10px; padding: 14px 18px; font-size: 14px;
+    color: #bf360c; cursor: pointer; transition: var(--transition); line-height: 1.4;
+  }
+  .btn-escalation:hover { background: #ffe8cc; border-style: solid; }
+  .btn-escalation:active { transform: scale(0.985); }
+  .btn-escalation .arrow {
+    margin-left: auto; color: #f57c00; transition: var(--transition);
+    flex-shrink: 0; font-size: 18px;
+  }
+  .btn-escalation:hover .arrow { transform: translateX(3px); }
+
+  /* ===== BACK ===== */
+  .back-row { padding: 16px 24px; border-top: 1px solid var(--gray-200); }
+  .btn-back {
+    background: none; border: 1px solid var(--gray-300); color: var(--gray-600);
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: var(--transition);
+  }
+  .btn-back:hover { background: var(--gray-50); color: var(--gray-800); border-color: var(--gray-400); }
+
+  /* ===== MINIMAP (list) ===== */
+  .minimap-toggle {
+    position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
+    border-radius: 50%; background: var(--sber-green); color: white;
+    border: none; box-shadow: var(--shadow-lg); cursor: pointer;
+    font-size: 20px; display: flex; align-items: center; justify-content: center;
+    transition: var(--transition); z-index: 90;
+  }
+  .minimap-toggle:hover { transform: scale(1.1); background: var(--sber-green-dark); }
+  .minimap-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 200; animation: fadeIn 0.2s ease;
+  }
+  .minimap-overlay.open { display: flex; align-items: center; justify-content: center; }
+  .minimap-panel {
+    background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 24px;
+  }
+  .minimap-panel h2 { font-size: 18px; margin-bottom: 16px; color: var(--gray-900); }
+  .minimap-list { list-style: none; }
+  .minimap-list li {
+    padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer;
+    transition: var(--transition); display: flex; align-items: center; gap: 10px;
+    border-left: 3px solid transparent;
+  }
+  .minimap-list li:hover { background: var(--gray-50); }
+  .minimap-list li.current { background: var(--sber-green-light); border-left-color: var(--sber-green); font-weight: 600; }
+  .minimap-list li.visited { color: var(--gray-500); }
+  .minimap-list li .mm-badge { font-size: 11px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+
+  /* ===== GRAPH VIEW ===== */
+  .graph-container {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  .graph-toolbar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .graph-toolbar span { font-size: 13px; color: var(--gray-500); }
+  .graph-zoom-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--gray-300);
+    background: white; cursor: pointer; font-size: 16px; display: flex;
+    align-items: center; justify-content: center; transition: var(--transition);
+  }
+  .graph-zoom-btn:hover { background: var(--gray-50); border-color: var(--gray-400); }
+  .graph-legend {
+    display: flex; gap: 16px; margin-left: auto; font-size: 12px; color: var(--gray-600);
+    align-items: center; flex-wrap: wrap;
+  }
+  .graph-legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; border: 2px solid;
+  }
+  .graph-viewport {
+    overflow: auto;
+    cursor: grab;
+    min-height: 500px;
+    max-height: calc(100vh - 220px);
+  }
+  .graph-viewport:active { cursor: grabbing; }
+  .graph-svg { display: block; }
+  .graph-svg .node-rect {
+    rx: 8; ry: 8;
+    stroke-width: 2;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .graph-svg .node-rect:hover { filter: brightness(0.95); }
+  .graph-svg .node-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 11px;
+    fill: var(--gray-800);
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .graph-svg .node-ref {
+    font-size: 9px;
+    fill: var(--gray-500);
+    pointer-events: none;
+    text-anchor: middle;
+  }
+  .graph-svg .edge-line { fill: none; stroke: var(--gray-400); stroke-width: 1.5; }
+  .graph-svg .edge-arrow { fill: var(--gray-400); }
+  .graph-svg .edge-label {
+    font-size: 9px;
+    fill: var(--gray-500);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-anchor: middle;
+  }
+  .graph-svg .node-current .node-rect {
+    stroke: var(--sber-green) !important;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 8px rgba(33,160,56,0.4));
+  }
+  .graph-svg .node-visited .node-rect { opacity: 0.6; }
+  .graph-svg .edge-visited .edge-line { stroke: var(--sber-green); stroke-width: 2; }
+  .graph-svg .edge-visited .edge-arrow { fill: var(--sber-green); }
+
+  /* ===== ISSUES TAB ===== */
+  .issues-list { display: flex; flex-direction: column; gap: 12px; }
+  .issue-card {
+    background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .issue-card-header {
+    padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--gray-200); flex-wrap: wrap;
+  }
+  .issue-card-header .step-link {
+    color: var(--sber-green); cursor: pointer; font-weight: 600; font-size: 14px;
+    text-decoration: none; border-bottom: 1px dashed var(--sber-green);
+  }
+  .issue-card-header .step-link:hover { color: var(--sber-green-dark); }
+  .issue-card-header .issue-ref {
+    font-size: 12px; color: var(--gray-500); margin-left: auto;
+  }
+  .issue-card-body { padding: 14px 20px; }
+  .issue-card-body .comment-bubble { margin-bottom: 0; }
+  .issues-empty {
+    text-align: center; padding: 60px 20px; color: var(--gray-500); font-size: 15px;
+  }
+  .issues-count-badge {
+    background: var(--orange-warn); color: var(--orange-warn-text);
+    font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 4px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 640px) {
+    .header { padding: 12px 16px; }
+    .header-inner { flex-wrap: wrap; gap: 8px; }
+    .header h1 { font-size: 15px; }
+    .header-subtitle { font-size: 12px; }
+    .header-controls { order: -1; margin-left: auto; }
+    .step-counter { font-size: 12px; padding: 3px 10px; }
+    .btn-reset { padding: 5px 10px; font-size: 12px; }
+
+    .tab-bar { padding: 0; }
+    .tab-btn { flex: 1; justify-content: center; padding: 12px 8px; font-size: 13px; gap: 4px; }
+    .tab-icon { font-size: 14px; }
+
+    .breadcrumbs-bar { padding: 8px 16px; }
+    .breadcrumbs-inner { font-size: 12px; }
+    .crumb { padding: 2px 6px; }
+
+    .main { padding: 12px; }
+
+    .step-title { font-size: 17px; padding: 10px 16px 0; }
+    .step-badge-row { padding: 12px 16px 0; }
+    .step-badge { font-size: 11px; padding: 3px 8px; }
+    .step-ref { font-size: 11px; }
+
+    .speech-block { margin: 12px 16px; padding: 12px 14px; }
+    .speech-text { font-size: 14px; }
+
+    .comments-section { padding: 0 16px 12px; }
+    .comment-bubble { padding: 10px 12px; font-size: 12px; gap: 8px; }
+
+    .answers-section { padding: 0 16px 16px; }
+    .answer-btn { padding: 14px 16px; font-size: 14px; min-height: 48px; gap: 10px; }
+    .answer-emoji { font-size: 18px; }
+
+    .objections-section { padding: 16px; }
+    .objection-trigger { padding: 14px 16px; font-size: 13px; min-height: 48px; }
+    .objection-body { padding: 12px 14px 14px; font-size: 13px; }
+    .objection-body .answer-btn { padding: 12px 14px; font-size: 13px; }
+
+    .back-row { padding: 12px 16px; }
+    .btn-back { padding: 10px 16px; font-size: 13px; }
+
+    .minimap-toggle { width: 44px; height: 44px; bottom: 16px; right: 16px; font-size: 18px; }
+    .minimap-panel { width: 95%; padding: 16px; max-height: 85vh; }
+    .minimap-panel h2 { font-size: 16px; }
+    .minimap-list li { padding: 10px 12px; font-size: 13px; }
+
+    .graph-toolbar { padding: 10px 12px; gap: 6px; }
+    .graph-legend { margin-left: 0; gap: 10px; font-size: 11px; }
+    .graph-viewport { min-height: 400px; max-height: calc(100vh - 200px); -webkit-overflow-scrolling: touch; }
+
+    .issue-card-header { padding: 12px 16px; }
+    .issue-card-body { padding: 12px 16px; }
+    .issue-card-header .issue-ref { margin-left: 0; font-size: 11px; }
+    .issues-count-badge { font-size: 10px; }
+  }
+
+  @media (max-width: 380px) {
+    .header h1 { font-size: 13px; }
+    .header-subtitle { display: none; }
+    .step-title { font-size: 15px; }
+    .answer-btn { padding: 12px 14px; font-size: 13px; }
+    .speech-text { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>Сценарий диалога B2C: Зарплатный проект</h1>
+      <div class="header-subtitle">Промт B2C — интерактивный визуализатор</div>
+    </div>
+    <div class="header-controls">
+      <span class="step-counter" id="stepCounter">Шаг 1</span>
+      <button class="btn-reset" onclick="resetScenario()">С начала</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+</div>
+
+<!-- TAB BAR -->
+<div style="background:white;border-bottom:1px solid var(--gray-200);">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabScenario" onclick="switchTab('scenario')">
+      <span class="tab-icon">&#9654;</span> Сценарий
+    </button>
+    <button class="tab-btn" id="tabGraph" onclick="switchTab('graph')">
+      <span class="tab-icon">&#11090;</span> Граф
+    </button>
+    <button class="tab-btn" id="tabIssues" onclick="switchTab('issues')">
+      <span class="tab-icon">&#9888;</span> Вопросы <span class="issues-count-badge" id="issuesCount"></span>
+    </button>
+  </div>
+</div>
+
+<!-- BREADCRUMBS -->
+<div class="breadcrumbs-bar" id="breadcrumbsBar">
+  <div class="breadcrumbs-inner" id="breadcrumbs"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="view active" id="viewScenario">
+    <div id="stepContainer"></div>
+  </div>
+  <div class="view" id="viewGraph">
+    <div class="graph-container">
+      <div class="graph-toolbar">
+        <button class="graph-zoom-btn" onclick="graphZoom(1.2)" title="Увеличить">+</button>
+        <button class="graph-zoom-btn" onclick="graphZoom(1/1.2)" title="Уменьшить">&minus;</button>
+        <button class="graph-zoom-btn" onclick="graphFit()" title="Вписать">&#8596;</button>
+        <span>Прокрутка / перетаскивание для навигации</span>
+        <div class="graph-legend">
+          <div class="graph-legend-item"><div class="legend-dot" style="background:var(--sber-green-light);border-color:var(--sber-green);"></div> Текущий</div>
+          <div class="graph-legend-item"><div class="legend-dot" style="background:var(--gray-200);border-color:var(--gray-400);"></div> Пройден</div>
+          <div class="graph-legend-item"><div class="legend-dot" style="background:white;border-color:var(--gray-300);"></div> Не посещён</div>
+          <div class="graph-legend-item"><div class="legend-dot" style="background:#e8f5e9;border-color:#2e7d32;"></div> Успех</div>
+          <div class="graph-legend-item"><div class="legend-dot" style="background:var(--red-soft);border-color:var(--red-soft-text);"></div> Конец</div>
+          <div class="graph-legend-item"><div class="legend-dot" style="background:var(--orange-warn);border-color:var(--orange-warn-text);"></div> Возражение</div>
+        </div>
+      </div>
+      <div class="graph-viewport" id="graphViewport">
+        <svg class="graph-svg" id="graphSvg"></svg>
+      </div>
+    </div>
+  </div>
+  <div class="view" id="viewIssues">
+    <div id="issuesContainer"></div>
+  </div>
+</div>
+
+<button class="minimap-toggle" onclick="toggleMinimap()" title="Список шагов">&#9776;</button>
+
+<div class="minimap-overlay" id="minimapOverlay" onclick="closeMinimap(event)">
+  <div class="minimap-panel" onclick="event.stopPropagation()">
+    <h2>Карта сценария</h2>
+    <ul class="minimap-list" id="minimapList"></ul>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SCENARIO DATA — B2C
+// ============================================================
+// Все возражения из промта B2C (п. 7–9)
+const ALL_OBJECTIONS = [
+  {
+    id: "v1",
+    trigger: "Нас всё устраивает в текущем банке",
+    code: "В1",
+    response: `Понимаю вас. Если система отлажена — действительно, зачем? Просто у нас сейчас появились условия, которых раньше не было:\n• Полная нулевая комиссия за зачисление зарплаты\n• Бесплатное обслуживание карт для сотрудников и для вас\n• Скидки по кредитам до 2% за зарплатный фонд\n\nВаш текущий банк даёт такие же выгоды? Если нет — возможно, стоит хотя бы сравнить.`
+  },
+  {
+    id: "v2",
+    trigger: "Дорого / Условия невыгодны",
+    code: "В2",
+    response: `Ну смотрите, комиссия за зачисление зарплаты — 0% для всех регионов независимо от суммы. Перечисления самозанятым — тоже без комиссии.\n\nЗарплатный проект сам по себе не добавляет вам расходов, а наоборот — экономит лимиты на переводы и даёт скидки по кредитам. Это выгода, а не затраты.`
+  },
+  {
+    id: "v3",
+    trigger: "Сложно переходить",
+    code: "В3",
+    response: `Понимаю вас, переход всегда кажется хлопотным. Но на самом деле всё, что нужно сделать, — это нажать несколько кнопок в приложении СберБизнес, которое у вас уже есть.\n\nНикаких бумаг, визитов в отделение и встреч с бухгалтерией. Весь процесс займёт не больше 5 минут, а вы и ваши сотрудники сразу начнёте экономить.\n\nДавайте я сейчас сориентирую вас по шагам — будет совсем просто. Хорошо?`
+  }
+];
+
+// Вопросы клиента в промте B2C прямо не прописаны — оставляем пустым для последующего дополнения
+const ALL_QA = [];
+
+// Шаги, на которых НЕ показываем возражения/вопросы (приветствие, завершения)
+const NO_OBJECTIONS_STEPS = new Set([
+  "greeting", "end_not_convenient", "end_polite_decline", "end_success", "end_self_enrollment", "unknown_question", "end_escalation"
+]);
+
+const STEPS = {
+  greeting: {
+    title: "Приветствие",
+    badge: "Начало диалога",
+    ref: "п. 1",
+    speech: `Добрый день, <Имя клиента>. Меня зовут <Имя ассистента>. Удобно сейчас говорить?`,
+    comments: [
+      { type: "info", text: "Правило промта: НЕ ПРОПУСКАТЬ приветствие. После вопроса ЖДИ ответа клиента — не иди дальше, пока не убедишься, что клиент ответил." },
+      { type: "info", text: "Обращение к клиенту — ВСЕГДА строго на «вы». Тон — вежливый, настойчивый, доброжелательный, эмпатичный." },
+      { type: "warn", discuss: true, text: "В промте B2C не прописан сценарий, если клиенту «неудобно говорить» (нет блока переноса звонка). По аналогии с B2B-скриптом добавлен вежливый отказ — нужно согласовать, нужен ли здесь перенос." }
+    ],
+    answers: [
+      { text: "Да, удобно", emoji: "👍", next: "presentation" },
+      { text: "Нет, неудобно", emoji: "⏳", next: "end_not_convenient" }
+    ],
+    objections: []
+  },
+
+  end_not_convenient: {
+    title: "Клиенту неудобно говорить",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    comments: [
+      { type: "warn", discuss: true, text: "В исходном промте нет явной логики переноса — сейчас просто прощаемся. Возможно, нужно добавить перенос на конкретное время." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  presentation: {
+    title: "Презентация",
+    badge: "Презентация",
+    ref: "п. 2",
+    speech: `Спасибо. Звоню рассказать, что мы недавно обновили условия для зарплатных проектов. Причём условия настолько удобные, что многие компании уже перевели зарплату в Сбер — и экономят, и сотрудники довольны.
+
+Скажите, пожалуйста, а вы сейчас как зарплату сотрудникам выплачиваете?`,
+    comments: [
+      { type: "info", text: "Открытый вопрос — чтобы выявить текущий способ выплаты зарплаты. ЖДИ ответа клиента." },
+      { type: "info", text: "Если клиент сказал, что уже платит через Сбер — переходим к реферальной программе (п. 5 промта)." }
+    ],
+    answers: [
+      { text: "Через другой банк / наличные / касса", emoji: "💬", next: "benefits" },
+      { text: "Уже плачу зарплату через Сбер", emoji: "🏦", next: "already_sber" },
+      { text: "Нет сотрудников / не плачу зарплату", emoji: "👤", next: "benefits" }
+    ],
+    objections: []
+  },
+
+  already_sber: {
+    title: "Клиент уже в Сбере",
+    badge: "Реферальная программа",
+    ref: "п. 5",
+    speech: `Отлично! Тогда я вам расскажу кое-что другое, приятное. Оказывается, вы можете получать деньги просто за то, что порекомендуете нас партнёрам. Там бонусы идут и вам, и тому, кого пригласите.
+
+Я на секунду, уточню детали?`,
+    comments: [
+      { type: "info", text: "Переход с основного сценария — если зарплата уже в Сбере, предлагаем реферальную программу вместо оформления." }
+    ],
+    answers: [
+      { text: "Да, интересно — расскажите", emoji: "✅", next: "referral" },
+      { text: "Нет, спасибо", emoji: "✋", next: "end_polite_decline" }
+    ],
+    objections: []
+  },
+
+  referral: {
+    title: "Реферальная программа",
+    badge: "Реферальная программа",
+    ref: "п. 5",
+    speech: `Вы можете рекомендовать зарплатный проект своим партнёрам. Поделитесь с партнёром персональной ссылкой. Если партнёр подключит зарплатный договор и произведёт зачисления — вы получаете бонус, и ваш партнёр тоже.
+
+Поощрения суммируются, количество приглашений не ограничено. Хотите, отправлю ссылку на подробные условия?`,
+    comments: [
+      { type: "warn", discuss: true, text: "В промте B2C детальные условия реферальной программы не прописаны (сумма бонуса, условия начисления). Взято по аналогии с B2B — нужно уточнить конкретные условия для B2C." }
+    ],
+    answers: [
+      { text: "Да, пришлите / расскажу партнёру", emoji: "✅", next: "end_success" },
+      { text: "Не интересно", emoji: "✋", next: "end_polite_decline" }
+    ],
+    objections: []
+  },
+
+  benefits: {
+    title: "Преимущества продукта",
+    badge: "Выгоды",
+    ref: "п. 3",
+    speech: `Понял(а) вас. Давайте я коротко перечислю, что вы и ваши сотрудники получаете при переходе в Сбер.
+
+Первое и самое важное для вас: полное отсутствие комиссий за зачисление зарплаты и выплаты самозанятым. Подключение и обслуживание карт — бесплатно для вас и ваших сотрудников, никаких скрытых платежей.
+
+Второе — скорость зачисления. Деньги сотрудники получают уже через 10 минут. Плюс у вас будет личный кабинет в СберБизнес, он бесплатный — можно всё проводить даже без расчётного счёта в Сбере.
+
+Третье — скидки по кредитам для вас и ваших сотрудников. За каждые 50 тыс. руб. зарплатного фонда в месяц ставка по кредиту снижается на 0,1%. Максимум — скидка 2%. Это уже существенно.
+
+По сути, вы получаете полностью бесплатное для компании решение, а ваши сотрудники — реальные бонусы. У вас есть возможность перейти без затрат и сразу начать экономить.
+
+Как вам такой вариант?`,
+    comments: [
+      { type: "info", text: "Три ключевые выгоды: 1) 0% комиссия и бесплатные карты; 2) скорость зачисления (10 мин.) + бесплатный СберБизнес; 3) скидки по кредитам до 2%." },
+      { type: "warn", discuss: true, text: "В промте B2C нет адаптации для клиента БЕЗ сотрудников (один ИП/собственник) — текст про «вас и ваших сотрудников» звучит странно. Нужно решить: делать отдельный вариант (как в B2B) или оставить один универсальный." }
+    ],
+    answers: [
+      { text: "Да, звучит интересно", emoji: "✅", next: "enrollment_intro" },
+      { text: "Есть возражение / сомнение", emoji: "🤔", next: "objection_prompt" },
+      { text: "Нет, не нужно", emoji: "✋", next: "objection_prompt" }
+    ],
+    objections: []
+  },
+
+  objection_prompt: {
+    title: "Отработка возражения",
+    badge: "Возражение",
+    badgeType: "objection",
+    ref: "Правило",
+    speech: `[Правило промта: Не спорь. Присоединись к сомнению («Понимаю вас...»), приведи аргумент (выгоду), снова призови к действию.]
+
+Выберите ниже подходящее возражение из списка — там готовая отработка. Если клиент возражает уже третий раз — вежливо попрощайтесь.`,
+    comments: [
+      { type: "info", text: "Алгоритм: «Понимаю вас» → выгода → призыв к действию. НЕ спорить, не переходить на сленг, сохранять вежливый тон." },
+      { type: "warn", text: "ВНИМАНИЕ: если клиент возражает третий раз — вежливо прощаемся и переходим к завершению (п. 10 промта)." },
+      { type: "warn", discuss: true, text: "Счётчик возражений — нужна техническая реализация: как отслеживать, что это уже третий круг? Требуется продумать." }
+    ],
+    answers: [
+      { text: "Возражение отработано — клиент согласен", emoji: "✅", next: "enrollment_intro" },
+      { text: "Клиент всё ещё сомневается", emoji: "🤔", next: "objection_prompt" },
+      { text: "Третий отказ — прощаемся", emoji: "🚫", next: "end_polite_decline" }
+    ],
+    objections: []
+  },
+
+  enrollment_intro: {
+    title: "Переход к оформлению",
+    badge: "Оформление",
+    badgeType: "success",
+    ref: "п. 3 (доп.)",
+    speech: `Тогда давайте я сейчас помогу вам подключить зарплатный проект — это займёт буквально 5 минут, хорошо?`,
+    comments: [
+      { type: "info", text: "Подтверждение готовности клиента оформить прямо сейчас. ЖДИ ответа." }
+    ],
+    answers: [
+      { text: "Хорошо, подключаем сейчас", emoji: "✅", next: "app_check" },
+      { text: "Неудобно / хочу сам позже", emoji: "📱", next: "self_enrollment" }
+    ],
+    objections: []
+  },
+
+  self_enrollment: {
+    title: "Клиент оформит самостоятельно",
+    badge: "Самостоятельно",
+    badgeType: "success",
+    ref: "п. 6",
+    speech: `Поняла(а) вас. Тогда после разговора войдите в личный кабинет СберБизнес — через приложение или браузер.
+
+В левом горизонтальном меню выберите «Зарплатный проект» и нажмите «Оформить заявку». Заполните заявление, нажмите кнопку «Создать», подпишите с помощью СМС-кода и отправьте в банк.
+
+Или оставьте на сайте свой номер для консультации.`,
+    comments: [
+      { type: "info", text: "Клиенту не удобно оформить на звонке / хочет сам — даём краткую инструкцию и предлагаем оставить номер для консультации." }
+    ],
+    answers: [
+      { text: "Хорошо, спасибо — оформлю сам", emoji: "✅", next: "end_self_enrollment" }
+    ],
+    objections: []
+  },
+
+  end_self_enrollment: {
+    title: "Клиент оформит самостоятельно",
+    badge: "Завершение",
+    badgeType: "success",
+    isEnding: true,
+    ref: "п. 10",
+    speech: `Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    comments: [],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  app_check: {
+    title: "Есть ли приложение?",
+    badge: "Оформление",
+    badgeType: "success",
+    ref: "п. 4",
+    speech: `Вам нужно только зайти в СберБизнес — он установлен у вас на телефоне?`,
+    comments: [
+      { type: "info", text: "Разветвление канала оформления: приложение vs. браузер." }
+    ],
+    answers: [
+      { text: "Да, приложение установлено", emoji: "📱", next: "app_step_open" },
+      { text: "Нет / не установлено", emoji: "💻", next: "browser_enrollment" }
+    ],
+    objections: []
+  },
+
+  app_step_open: {
+    title: "Шаг 1: Открыть приложение",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (1/6)",
+    speech: `Откройте приложение СберБизнес. Как откроете — скажите?`,
+    comments: [
+      { type: "info", text: "Пошаговая навигация — ЖДЁМ подтверждения на каждом шаге, не бежим вперёд." }
+    ],
+    answers: [
+      { text: "Открыл(а)", emoji: "✅", next: "app_step_products" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  app_step_products: {
+    title: "Шаг 2: Экран «Продукты»",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (2/6)",
+    speech: `Перейдите на экран «Продукты». Перешли?`,
+    comments: [],
+    answers: [
+      { text: "Перешёл(ла)", emoji: "✅", next: "app_step_all_products" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  app_step_all_products: {
+    title: "Шаг 3: «Все продукты» → «Зарплатный проект»",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (3/6)",
+    speech: `Выберите вкладку «Все продукты» и найдите «Зарплатный проект». Выбрали?`,
+    comments: [],
+    answers: [
+      { text: "Выбрал(а)", emoji: "✅", next: "app_step_connect" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  app_step_connect: {
+    title: "Шаг 4: Нажать «Подключить»",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (4/6)",
+    speech: `Нажмите «Подключить». Получилось?`,
+    comments: [],
+    answers: [
+      { text: "Нажал(а)", emoji: "✅", next: "app_step_form" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  app_step_form: {
+    title: "Шаг 5: Заполнить заявление",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (5/6)",
+    speech: `Далее заполните заявление о присоединении. Укажите:
+• Счёт списания
+• Контактное лицо
+• Контактный телефон
+
+Сообщите, как всё укажете?`,
+    comments: [],
+    answers: [
+      { text: "Указал(а) всё", emoji: "✅", next: "app_step_sms" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  app_step_sms: {
+    title: "Шаг 6: Продолжить и СМС-код",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (6/6)",
+    speech: `Нажмите «Продолжить» и подтвердите заявление с помощью СМС-кода.
+
+После обработки заявки зарплатный проект появится во вкладке «Подключено». Чтобы создать новые выплаты или посмотреть уже существующие — нажмите «Перейти к выплатам».`,
+    comments: [
+      { type: "info", text: "Последний шаг — подписание СМС-кодом. После этого — к успешному завершению." }
+    ],
+    answers: [
+      { text: "Готово, всё подписал(а)", emoji: "🎉", next: "end_success" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  browser_enrollment: {
+    title: "Оформление через браузер",
+    badge: "Инструкция",
+    badgeType: "success",
+    ref: "п. 4 (без приложения)",
+    speech: `Тогда войдите в личный кабинет СберБизнес через браузер. В левом горизонтальном меню выберите «Зарплатный проект» и нажмите «Оформить заявку».
+
+Заполните заявление, нажмите кнопку «Создать», подпишите с помощью СМС-кода и отправьте в банк.
+
+После регистрации договора можете выпустить карты и делать выплаты. В течение недели с номера 0321 с вами свяжется менеджер, чтобы помочь в этом.`,
+    comments: [
+      { type: "info", text: "Альтернативный канал — браузер. Используется, если приложения нет на телефоне." }
+    ],
+    answers: [
+      { text: "Оформил(а) через браузер", emoji: "✅", next: "end_success" },
+      { text: "Не получается", emoji: "❓", next: "unknown_question" }
+    ],
+    objections: []
+  },
+
+  unknown_question: {
+    title: "Вопрос без ответа / эскалация",
+    badge: "Эскалация",
+    badgeType: "objection",
+    ref: "",
+    speech: `К сожалению, сейчас не могу ответить на ваш вопрос / помочь с этим шагом. В течение недели с номера 0321 с вами свяжется менеджер, чтобы помочь в этом.
+
+Благодарю за уделённое время.`,
+    comments: [
+      { type: "warn", discuss: true, text: "В промте B2C нет явной логики эскалации на живого оператора. Блок добавлен по аналогии с B2B-скриптом — нужно согласовать, как передавать задачу менеджеру." }
+    ],
+    answers: [
+      { text: "Звонок завершён (передача менеджеру)", emoji: "📋", next: "end_escalation" }
+    ],
+    objections: []
+  },
+
+  end_escalation: {
+    title: "Завершён — передача менеджеру",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Звонок завершён. Задача передана клиентскому менеджеру — с клиентом свяжутся в течение недели с номера 0321.]`,
+    comments: [],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  end_polite_decline: {
+    title: "Клиент отказался",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "п. 10",
+    speech: `Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    comments: [
+      { type: "info", text: "Правило промта: если клиент возражает третий раз — вежливо прощаемся, без давления." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  end_success: {
+    title: "Успешное завершение",
+    badge: "Успех",
+    badgeType: "success",
+    isEnding: true,
+    ref: "п. 10",
+    speech: `Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    comments: [
+      { type: "info", text: "Единая формула прощания из п. 10 промта — используется для любого успешного завершения." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  }
+};
+
+const STEP_ORDER = [
+  "greeting","end_not_convenient",
+  "presentation","already_sber","referral",
+  "benefits","objection_prompt","enrollment_intro",
+  "self_enrollment","end_self_enrollment",
+  "app_check","app_step_open","app_step_products","app_step_all_products",
+  "app_step_connect","app_step_form","app_step_sms",
+  "browser_enrollment","unknown_question","end_escalation",
+  "end_polite_decline","end_success"
+];
+
+// ============================================================
+// GRAPH LAYOUT
+// ============================================================
+const GRAPH_NODES = {
+  greeting:            { x: 420, y: 40,  w: 150, h: 36 },
+  end_not_convenient:  { x: 180, y: 130, w: 200, h: 36 },
+
+  presentation:        { x: 560, y: 130, w: 150, h: 36 },
+  already_sber:        { x: 760, y: 230, w: 170, h: 36 },
+  referral:            { x: 820, y: 330, w: 170, h: 36 },
+
+  benefits:            { x: 500, y: 230, w: 170, h: 36 },
+  objection_prompt:    { x: 300, y: 330, w: 180, h: 36 },
+  enrollment_intro:    { x: 520, y: 330, w: 180, h: 36 },
+
+  self_enrollment:     { x: 80,  y: 430, w: 190, h: 36 },
+  end_self_enrollment: { x: 80,  y: 520, w: 190, h: 36 },
+
+  app_check:           { x: 520, y: 430, w: 170, h: 36 },
+  app_step_open:       { x: 320, y: 520, w: 170, h: 36 },
+  app_step_products:   { x: 320, y: 600, w: 170, h: 36 },
+  app_step_all_products:{x: 320, y: 680, w: 200, h: 36 },
+  app_step_connect:    { x: 320, y: 760, w: 170, h: 36 },
+  app_step_form:       { x: 320, y: 840, w: 170, h: 36 },
+  app_step_sms:        { x: 320, y: 920, w: 170, h: 36 },
+
+  browser_enrollment:  { x: 720, y: 520, w: 180, h: 36 },
+  unknown_question:    { x: 550, y: 1020, w: 180, h: 36 },
+  end_escalation:      { x: 550, y: 1100, w: 200, h: 36 },
+
+  end_polite_decline:  { x: 300, y: 1020, w: 180, h: 36 },
+  end_success:         { x: 100, y: 1020, w: 180, h: 36 }
+};
+
+const GRAPH_EDGES = [
+  { from: "greeting", to: "presentation", label: "Удобно" },
+  { from: "greeting", to: "end_not_convenient", label: "Неудобно" },
+
+  { from: "presentation", to: "benefits", label: "Др. банк / касса" },
+  { from: "presentation", to: "already_sber", label: "Уже Сбер" },
+  { from: "already_sber", to: "referral", label: "Интересно" },
+  { from: "already_sber", to: "end_polite_decline", label: "Нет" },
+  { from: "referral", to: "end_success", label: "ОК" },
+  { from: "referral", to: "end_polite_decline", label: "Нет" },
+
+  { from: "benefits", to: "enrollment_intro", label: "Согласен" },
+  { from: "benefits", to: "objection_prompt", label: "Возражение" },
+  { from: "objection_prompt", to: "enrollment_intro", label: "Отработано" },
+  { from: "objection_prompt", to: "objection_prompt", label: "Ещё" },
+  { from: "objection_prompt", to: "end_polite_decline", label: "3-й раз" },
+
+  { from: "enrollment_intro", to: "app_check", label: "ОК" },
+  { from: "enrollment_intro", to: "self_enrollment", label: "Сам позже" },
+  { from: "self_enrollment", to: "end_self_enrollment", label: "" },
+
+  { from: "app_check", to: "app_step_open", label: "Есть" },
+  { from: "app_check", to: "browser_enrollment", label: "Нет" },
+  { from: "app_step_open", to: "app_step_products", label: "" },
+  { from: "app_step_products", to: "app_step_all_products", label: "" },
+  { from: "app_step_all_products", to: "app_step_connect", label: "" },
+  { from: "app_step_connect", to: "app_step_form", label: "" },
+  { from: "app_step_form", to: "app_step_sms", label: "" },
+  { from: "app_step_sms", to: "end_success", label: "Готово" },
+
+  { from: "app_step_open", to: "unknown_question", label: "Проблема" },
+  { from: "app_step_products", to: "unknown_question", label: "Проблема" },
+  { from: "app_step_all_products", to: "unknown_question", label: "Проблема" },
+  { from: "app_step_connect", to: "unknown_question", label: "Проблема" },
+  { from: "app_step_form", to: "unknown_question", label: "Проблема" },
+  { from: "app_step_sms", to: "unknown_question", label: "Проблема" },
+  { from: "browser_enrollment", to: "end_success", label: "ОК" },
+  { from: "browser_enrollment", to: "unknown_question", label: "Проблема" },
+  { from: "unknown_question", to: "end_escalation", label: "" }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let history = [];
+let currentStepId = null;
+let visitedSteps = new Set();
+let currentTab = 'scenario';
+let graphScale = 1;
+
+// ============================================================
+// PROGRESS
+// ============================================================
+const depthCache = {};
+function maxDepthToEnd(stepId) {
+  if (depthCache[stepId] !== undefined) return depthCache[stepId];
+  const step = STEPS[stepId];
+  if (!step) return 0;
+  if (step.isEnding) return (depthCache[stepId] = 0);
+  let maxD = 0;
+  depthCache[stepId] = 0; // prevent infinite loop on cycles
+  for (const a of step.answers) {
+    if (a.next === stepId) continue;
+    const d = maxDepthToEnd(a.next);
+    if (d + 1 > maxD) maxD = d + 1;
+  }
+  return (depthCache[stepId] = maxD);
+}
+
+function computeProgress() {
+  const step = STEPS[currentStepId];
+  if (step && step.isEnding) return 100;
+  const depth = history.length;
+  const remaining = maxDepthToEnd(currentStepId);
+  const total = depth + remaining;
+  if (total === 0) return 5;
+  return Math.max(5, Math.round((depth / total) * 100));
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabScenario').classList.toggle('active', tab === 'scenario');
+  document.getElementById('tabGraph').classList.toggle('active', tab === 'graph');
+  document.getElementById('tabIssues').classList.toggle('active', tab === 'issues');
+  document.getElementById('viewScenario').classList.toggle('active', tab === 'scenario');
+  document.getElementById('viewGraph').classList.toggle('active', tab === 'graph');
+  document.getElementById('viewIssues').classList.toggle('active', tab === 'issues');
+  document.getElementById('breadcrumbsBar').style.display = tab === 'scenario' ? '' : 'none';
+  if (tab === 'graph') renderGraph();
+  if (tab === 'issues') renderIssues();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goToStep(stepId, pushHistory = true) {
+  if (pushHistory && currentStepId) {
+    history.push(currentStepId);
+  }
+  currentStepId = stepId;
+  visitedSteps.add(stepId);
+  render();
+  if (currentTab === 'scenario') window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  if (history.length > 0) {
+    currentStepId = history.pop();
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function goToHistoryIndex(idx) {
+  currentStepId = history[idx];
+  history = history.slice(0, idx);
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetScenario() {
+  history = [];
+  visitedSteps.clear();
+  goToStep('greeting', false);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const step = STEPS[currentStepId];
+  if (!step) return;
+
+  const stepNum = history.length + 1;
+  document.getElementById('stepCounter').textContent = `Шаг ${stepNum}`;
+  document.getElementById('progressFill').style.width = computeProgress() + '%';
+
+  renderBreadcrumbs();
+  renderStepCard(step);
+  renderMinimap();
+  if (currentTab === 'graph') renderGraph();
+}
+
+function renderBreadcrumbs() {
+  const bc = document.getElementById('breadcrumbs');
+  let html = '';
+  history.forEach((hId, idx) => {
+    html += `<span class="crumb" onclick="goToHistoryIndex(${idx})">${STEPS[hId].title}</span>`;
+    html += `<span class="crumb-sep">&#9654;</span>`;
+  });
+  html += `<span class="crumb active">${STEPS[currentStepId].title}</span>`;
+  bc.innerHTML = html;
+  setTimeout(() => { bc.parentElement.scrollLeft = bc.parentElement.scrollWidth; }, 50);
+}
+
+function renderStepCard(step) {
+  const container = document.getElementById('stepContainer');
+  let html = '<div class="step-card">';
+
+  html += '<div class="step-badge-row">';
+  html += `<span class="step-badge ${step.badgeType||''}">${step.badge}</span>`;
+  if (step.ref) html += `<span class="step-ref">${step.ref}</span>`;
+  html += '</div>';
+
+  html += `<div class="step-title">${step.title}</div>`;
+
+  html += '<div class="speech-block"><div class="speech-label">Ассистент говорит:</div>';
+  html += `<div class="speech-text">${formatSpeech(step.speech)}</div></div>`;
+
+  if (step.comments.length > 0) {
+    html += '<div class="comments-section">';
+    step.comments.forEach(c => {
+      const cls = c.type === 'warn' ? 'warn' : '';
+      html += `<div class="comment-bubble ${cls}">`;
+      html += `<div class="comment-icon">${c.type === 'warn' ? '!' : 'i'}</div>`;
+      html += `<div class="comment-text">${c.text}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="answers-section"><div class="answers-label">Ответ клиента:</div><div class="answers-grid">';
+  step.answers.forEach(a => {
+    html += `<button class="answer-btn" onclick="goToStep('${a.next}')">`;
+    html += `<span class="answer-emoji">${a.emoji}</span><span>${a.text}</span>`;
+    html += `<span class="arrow">&#8250;</span></button>`;
+  });
+  html += '</div></div>';
+
+  if (!NO_OBJECTIONS_STEPS.has(currentStepId)) {
+    html += '<div class="objections-section"><div class="objections-header"><span>&#9888;</span> Возможные возражения клиента</div>';
+    ALL_OBJECTIONS.forEach(obj => {
+      html += `<div class="objection-item"><button class="objection-trigger" onclick="toggleObjection(this)">`;
+      html += `<span><strong>${obj.code}.</strong> ${obj.trigger}</span>`;
+      html += `<span class="chevron">&#9660;</span></button>`;
+      html += `<div class="objection-body">`;
+      html += `<div class="speech-block"><div class="speech-label">Ответ ассистента:</div>`;
+      html += `<div class="speech-text">${formatSpeech(obj.response)}</div></div>`;
+      html += `<button class="answer-btn" onclick="goToStep('enrollment_intro')"><span class="answer-emoji">✅</span><span>Клиент согласился — к оформлению</span><span class="arrow">&#8250;</span></button>`;
+      html += `<button class="answer-btn" onclick="goToStep('objection_prompt')"><span class="answer-emoji">🤔</span><span>Клиент всё ещё сомневается</span><span class="arrow">&#8250;</span></button>`;
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    if (ALL_QA.length > 0) {
+      html += '<div class="objections-section" style="border-top: none; padding-top: 0;"><div class="objections-header"><span>&#10068;</span> Вопросы клиента</div>';
+      ALL_QA.forEach(qa => {
+        html += `<div class="objection-item"><button class="objection-trigger" onclick="toggleObjection(this)">`;
+        html += `<span><strong>${qa.code}.</strong> ${qa.trigger}</span>`;
+        html += `<span class="chevron">&#9660;</span></button>`;
+        html += `<div class="objection-body">`;
+        html += `<div class="speech-block"><div class="speech-label">Ответ ассистента:</div>`;
+        html += `<div class="speech-text">${formatSpeech(qa.response)}</div></div>`;
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<div class="escalation-section">';
+    html += `<button class="btn-escalation" onclick="goToStep('unknown_question')">`;
+    html += `<span class="answer-emoji">🆘</span><span>Нет ответа на вопрос/возражение клиента — эскалация на менеджера</span>`;
+    html += `<span class="arrow">&#8250;</span></button>`;
+    html += '</div>';
+  }
+
+  if (history.length > 0) {
+    html += `<div class="back-row"><button class="btn-back" onclick="goBack()">&#8249; Назад</button></div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function formatSpeech(text) {
+  return text.replace(/\n/g, '<br>').replace(/• /g, '<span style="color:var(--sber-green);font-weight:bold;">•</span> ');
+}
+
+function toggleObjection(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ============================================================
+// MINIMAP
+// ============================================================
+function toggleMinimap() { document.getElementById('minimapOverlay').classList.toggle('open'); }
+function closeMinimap(e) {
+  if (e.target === document.getElementById('minimapOverlay'))
+    document.getElementById('minimapOverlay').classList.remove('open');
+}
+function renderMinimap() {
+  const list = document.getElementById('minimapList');
+  let html = '';
+  STEP_ORDER.forEach(id => {
+    const s = STEPS[id];
+    if (!s) return;
+    const isCur = id === currentStepId;
+    const isVis = visitedSteps.has(id) && !isCur;
+    let cls = isCur ? 'current' : isVis ? 'visited' : '';
+    let badge = '';
+    if (s.badgeType === 'ending') badge = '<span class="mm-badge" style="background:#ffebee;color:#c62828;">Конец</span>';
+    else if (s.badgeType === 'success') badge = '<span class="mm-badge" style="background:#e8f5e9;color:#2e7d32;">Успех</span>';
+    else if (s.badgeType === 'objection') badge = '<span class="mm-badge" style="background:#fff3e0;color:#e65100;">Возражение</span>';
+    html += `<li class="${cls}" onclick="goToStep('${id}'); document.getElementById('minimapOverlay').classList.remove('open');">`;
+    html += `<span>${s.title}</span>`;
+    if (s.ref) html += `<span style="color:var(--gray-400);font-size:12px;">${s.ref}</span>`;
+    html += badge;
+    if (isCur) html += '<span style="margin-left:auto;color:var(--sber-green);font-weight:bold;">&#9664;</span>';
+    html += '</li>';
+  });
+  list.innerHTML = html;
+}
+
+// ============================================================
+// GRAPH
+// ============================================================
+function renderGraph() {
+  const svg = document.getElementById('graphSvg');
+  const visitedEdges = new Set();
+  for (let i = 0; i < history.length; i++) {
+    const from = history[i];
+    const to = i + 1 < history.length ? history[i + 1] : currentStepId;
+    visitedEdges.add(from + '->' + to);
+  }
+
+  let maxX = 0, maxY = 0;
+  for (const id in GRAPH_NODES) {
+    const n = GRAPH_NODES[id];
+    maxX = Math.max(maxX, n.x + n.w + 40);
+    maxY = Math.max(maxY, n.y + n.h + 40);
+  }
+  const W = maxX + 40;
+  const H = maxY + 40;
+  svg.setAttribute('width', W * graphScale);
+  svg.setAttribute('height', H * graphScale);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  let html = '<defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">';
+  html += '<path d="M0,0 L8,3 L0,6 Z" class="edge-arrow"/></marker>';
+  html += '<marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">';
+  html += '<path d="M0,0 L8,3 L0,6 Z" fill="#21A038"/></marker></defs>';
+
+  GRAPH_EDGES.forEach(e => {
+    const fn = GRAPH_NODES[e.from];
+    const tn = GRAPH_NODES[e.to];
+    if (!fn || !tn) return;
+
+    const x1 = fn.x + fn.w / 2;
+    const y1 = fn.y + fn.h;
+    const x2 = tn.x + tn.w / 2;
+    const y2 = tn.y;
+
+    const isVisEdge = visitedEdges.has(e.from + '->' + e.to);
+    const eCls = isVisEdge ? 'edge-visited' : '';
+    const marker = isVisEdge ? 'url(#arrowhead-green)' : 'url(#arrowhead)';
+
+    const midY = (y1 + y2) / 2;
+    const dx = Math.abs(x2 - x1);
+    const ctrl = Math.min(40, dx * 0.3);
+
+    html += `<g class="${eCls}">`;
+    // self-loop (for objection_prompt)
+    if (e.from === e.to) {
+      const cx = fn.x + fn.w + 20;
+      const cy = fn.y + fn.h / 2;
+      html += `<path class="edge-line" d="M${fn.x + fn.w},${cy} C${cx + 30},${cy - 30} ${cx + 30},${cy + 30} ${fn.x + fn.w},${cy + 1}" marker-end="${marker}"/>`;
+      if (e.label) html += `<text class="edge-label" x="${cx + 35}" y="${cy + 4}">${e.label}</text>`;
+    } else {
+      html += `<path class="edge-line" d="M${x1},${y1} C${x1},${midY + ctrl} ${x2},${midY - ctrl} ${x2},${y2}" marker-end="${marker}"/>`;
+      if (e.label) {
+        const lx = (x1 + x2) / 2 + (x2 > x1 ? 5 : -5);
+        const ly = midY - 4;
+        html += `<text class="edge-label" x="${lx}" y="${ly}">${e.label}</text>`;
+      }
+    }
+    html += '</g>';
+  });
+
+  for (const id in GRAPH_NODES) {
+    const n = GRAPH_NODES[id];
+    const s = STEPS[id];
+    if (!s) continue;
+
+    const isCur = id === currentStepId;
+    const isVis = visitedSteps.has(id) && !isCur;
+    let nodeCls = isCur ? 'node-current' : isVis ? 'node-visited' : '';
+
+    let fill = 'white';
+    let stroke = '#ced4da';
+    if (s.badgeType === 'success') { fill = '#e8f5e9'; stroke = '#2e7d32'; }
+    else if (s.badgeType === 'ending') { fill = '#ffebee'; stroke = '#c62828'; }
+    else if (s.badgeType === 'objection') { fill = '#fff3e0'; stroke = '#e65100'; }
+    else if (id === 'greeting') { fill = '#e8f5e9'; stroke = '#21A038'; }
+
+    html += `<g class="${nodeCls}" style="cursor:pointer" onclick="goToStep('${id}'); switchTab('scenario');">`;
+    html += `<rect class="node-rect" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="${fill}" stroke="${stroke}"/>`;
+
+    let title = s.title;
+    if (title.length > 26) title = title.substring(0, 24) + '...';
+    html += `<text class="node-text" x="${n.x + n.w/2}" y="${n.y + n.h/2 - (s.ref ? 3 : 0)}">${title}</text>`;
+
+    if (s.ref) {
+      html += `<text class="node-ref" x="${n.x + n.w/2}" y="${n.y + n.h/2 + 10}">${s.ref}</text>`;
+    }
+    html += '</g>';
+  }
+
+  svg.innerHTML = html;
+}
+
+function graphZoom(factor) {
+  graphScale = Math.max(0.3, Math.min(3, graphScale * factor));
+  renderGraph();
+}
+
+function graphFit() {
+  const viewport = document.getElementById('graphViewport');
+  const vpW = viewport.clientWidth - 32;
+  let maxX = 0;
+  for (const id in GRAPH_NODES) {
+    const n = GRAPH_NODES[id];
+    maxX = Math.max(maxX, n.x + n.w + 40);
+  }
+  graphScale = Math.min(2, vpW / (maxX + 40));
+  renderGraph();
+}
+
+// ============================================================
+// ISSUES
+// ============================================================
+function collectIssues() {
+  const issues = [];
+  for (const id of STEP_ORDER) {
+    const step = STEPS[id];
+    if (!step) continue;
+    step.comments.forEach((c) => {
+      if (c.discuss) {
+        issues.push({ stepId: id, stepTitle: step.title, stepRef: step.ref, comment: c });
+      }
+    });
+  }
+  return issues;
+}
+
+function renderIssues() {
+  const issues = collectIssues();
+  const container = document.getElementById('issuesContainer');
+  document.getElementById('issuesCount').textContent = issues.length;
+
+  if (issues.length === 0) {
+    container.innerHTML = '<div class="issues-empty">Все вопросы проработаны!</div>';
+    return;
+  }
+
+  let html = '<div style="margin-bottom:16px;"><h2 style="font-size:20px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Вопросы к обсуждению</h2>';
+  html += '<p style="font-size:14px;color:var(--gray-600);">Пункты, требующие уточнения, согласования или технической проработки</p></div>';
+  html += '<div class="issues-list">';
+
+  issues.forEach((issue, i) => {
+    const cls = issue.comment.type === 'warn' ? 'warn' : '';
+    html += '<div class="issue-card">';
+    html += '<div class="issue-card-header">';
+    html += `<span style="font-size:13px;color:var(--gray-400);font-weight:600;">#${i + 1}</span>`;
+    html += `<a class="step-link" onclick="goToStep('${issue.stepId}'); switchTab('scenario');">${issue.stepTitle}</a>`;
+    if (issue.stepRef) html += `<span class="issue-ref">${issue.stepRef}</span>`;
+    html += '</div>';
+    html += '<div class="issue-card-body">';
+    html += `<div class="comment-bubble ${cls}">`;
+    html += `<div class="comment-icon">${issue.comment.type === 'warn' ? '!' : 'i'}</div>`;
+    html += `<div class="comment-text">${issue.comment.text}</div>`;
+    html += '</div></div></div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function updateIssuesCount() {
+  const issues = collectIssues();
+  document.getElementById('issuesCount').textContent = issues.length;
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.getElementById('minimapOverlay').classList.remove('open');
+  if (e.key === 'Backspace' && !e.target.closest('input, textarea')) { e.preventDefault(); goBack(); }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+goToStep('greeting', false);
+updateIssuesCount();
+</script>
+</body>
+</html>
