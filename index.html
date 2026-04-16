@@ -596,9 +596,48 @@ const ALL_OBJECTIONS = [
 // Вопросы клиента в промте B2C прямо не прописаны — оставляем пустым для последующего дополнения
 const ALL_QA = [];
 
-// Шаги, на которых НЕ показываем возражения/вопросы (приветствие, завершения)
+// Краевые сценарии — показываются на каждом активном шаге
+const ALL_EDGE_CASES = [
+  {
+    id: "ec_wants_human",
+    trigger: "Клиент зовёт человека / менеджера",
+    response: `[Первая попытка — предлагаем решить самостоятельно:]\nУ вас вопрос по зарплатному проекту? Давайте я постараюсь решить этот вопрос.\n\n[Если клиент продолжает настаивать:]\nУ меня, к сожалению, нет возможности переключить на менеджера. Позвоните, пожалуйста, на 0321, добавочный 1.`
+  },
+  {
+    id: "ec_robot_question",
+    trigger: "Клиент спрашивает, робот ли это",
+    response: `Да, я виртуальный помощник СберБизнес. Подскажите, у вас есть вопрос по зарплатному проекту? Я с удовольствием помогу.`
+  },
+  {
+    id: "ec_unclear",
+    trigger: "Неразборчивая речь / не удалось распознать",
+    response: `Извините, не расслышал(а) вас. Повторите, пожалуйста?\n\n[Если снова не удалось распознать:]\nИзвините, связь, похоже, нечёткая. Не могли бы вы повторить ещё раз?\n\n[Переспрашиваем столько раз, сколько нужно.]`
+  },
+  {
+    id: "ec_off_topic",
+    trigger: "Сторонний / нерелевантный вопрос",
+    response: `Я консультирую только по вопросам зарплатного проекта. По другим продуктам вы можете позвонить на 0321, добавочный 1.`
+  },
+  {
+    id: "ec_negativity",
+    trigger: "Резкий негатив / агрессия",
+    response: `Я действительно очень хочу помочь вам, но некомпетентен в этом вопросе. С проблемой помогут разобраться на линии 0321, добавочный 2.`
+  },
+  {
+    id: "ec_callback_request",
+    trigger: "Клиент просит перезвонить / хочет подумать / не хочет разговаривать",
+    response: `Хорошо, перезвоню вам через 2 часа.\n\n[Если через 2 часа тоже неудобно:]\nХорошо, тогда перезвоню вам завтра / сегодня вечером в [конкретный час]. Хорошего дня!`
+  }
+];
+
+// Шаги, на которых НЕ показываем возражения/вопросы/краевые (приветствие, завершения, телефония)
 const NO_OBJECTIONS_STEPS = new Set([
-  "greeting", "end_not_convenient", "end_polite_decline", "end_success", "end_self_enrollment", "unknown_question", "end_escalation"
+  "greeting", "end_not_convenient", "reschedule_later", "end_reschedule",
+  "end_polite_decline", "end_success",
+  "end_self_enrollment", "unknown_question", "end_escalation",
+  "wrong_person", "no_answer_1", "no_answer_2", "end_no_contact",
+  "end_number_invalid", "connection_lost_1", "connection_lost_2",
+  "end_max_objections"
 ]);
 
 const STEPS = {
@@ -614,20 +653,167 @@ const STEPS = {
     ],
     answers: [
       { text: "Да, удобно", emoji: "👍", next: "presentation" },
-      { text: "Нет, неудобно", emoji: "⏳", next: "end_not_convenient" }
+      { text: "Нет, неудобно", emoji: "⏳", next: "end_not_convenient" },
+      { text: "Подошёл не тот человек", emoji: "❌", next: "wrong_person" },
+      { text: "Не дозвонились / не берёт трубку / недоступен", emoji: "📵", next: "no_answer_1" },
+      { text: "Номер не существует", emoji: "🚫", next: "end_number_invalid" },
+      { text: "Обрыв соединения", emoji: "📡", next: "connection_lost_1" }
+    ],
+    objections: []
+  },
+
+  wrong_person: {
+    title: "Не тот человек",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `Прошу прощения за беспокойство. Всего доброго!`,
+    comments: [
+      { type: "info", text: "Если на звонок ответил человек, не закреплённый за данным номером — извиняемся и завершаем звонок." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  no_answer_1: {
+    title: "Не дозвонились (1-я попытка)",
+    badge: "Недозвон",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Клиент не ответил / не берёт трубку / недоступен. Запланирован повторный звонок через 2 часа.]`,
+    comments: [
+      { type: "info", text: "Первая попытка не удалась — перезваниваем через 2 часа." }
+    ],
+    answers: [
+      { text: "Перезвонили через 2 часа — ответил", emoji: "✅", next: "greeting" },
+      { text: "Снова не дозвонились", emoji: "📞", next: "no_answer_2" }
+    ],
+    objections: []
+  },
+
+  no_answer_2: {
+    title: "Не дозвонились (2-я попытка)",
+    badge: "Недозвон",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Повторный звонок через 2 часа — клиент снова не ответил. Запланирован звонок через 24 часа.]`,
+    comments: [
+      { type: "info", text: "Вторая попытка — перезваниваем через 24 часа." }
+    ],
+    answers: [
+      { text: "Перезвонили через 24 часа — ответил", emoji: "✅", next: "greeting" },
+      { text: "Снова не дозвонились", emoji: "🚫", next: "end_no_contact" }
+    ],
+    objections: []
+  },
+
+  end_no_contact: {
+    title: "Не удалось связаться — задача закрыта",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Все попытки дозвониться исчерпаны (сразу → через 2 часа → через 24 часа). Задача закрыта.]`,
+    comments: [
+      { type: "info", text: "После 3 неудачных попыток связаться задача закрывается." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  end_number_invalid: {
+    title: "Номер не существует",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Номер не существует. Задача закрыта.]`,
+    comments: [
+      { type: "info", text: "Если номер не существует — задача закрывается без повторных попыток." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
+    ],
+    objections: []
+  },
+
+  connection_lost_1: {
+    title: "Обрыв соединения (1-я попытка)",
+    badge: "Обрыв связи",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Соединение прервалось. Запланирован повторный звонок через 2 часа.]`,
+    comments: [
+      { type: "info", text: "При обрыве соединения — перезваниваем через 2 часа." }
+    ],
+    answers: [
+      { text: "Перезвонили через 2 часа — дозвонились", emoji: "✅", next: "greeting" },
+      { text: "Снова не удалось", emoji: "📞", next: "connection_lost_2" }
+    ],
+    objections: []
+  },
+
+  connection_lost_2: {
+    title: "Обрыв соединения (2-я попытка)",
+    badge: "Обрыв связи",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `[Повторная попытка через 2 часа не удалась. Запланирован звонок через 24 часа.]`,
+    comments: [],
+    answers: [
+      { text: "Перезвонили через 24 часа — дозвонились", emoji: "✅", next: "greeting" },
+      { text: "Не удалось дозвониться", emoji: "🚫", next: "end_no_contact" }
     ],
     objections: []
   },
 
   end_not_convenient: {
     title: "Клиенту неудобно говорить",
+    badge: "Перенос",
+    ref: "",
+    speech: `Хорошо, перезвоню вам через 2 часа. Хорошего дня!`,
+    comments: [
+      { type: "info", text: "Предлагаем конкретное время перезвона — через 2 часа. Не спрашиваем «Когда удобно?»." }
+    ],
+    answers: [
+      { text: "Клиент согласен — перезвоним через 2 часа", emoji: "✅", next: "end_reschedule" },
+      { text: "Через 2 часа тоже неудобно", emoji: "😕", next: "reschedule_later" }
+    ],
+    objections: []
+  },
+
+  reschedule_later: {
+    title: "Перенос на другое время",
+    badge: "Перенос",
+    ref: "",
+    speech: `Хорошо, тогда перезвоню вам завтра / сегодня вечером в [конкретный час]. Хорошего дня!`,
+    comments: [
+      { type: "info", text: "Называем конкретное время (не «когда-нибудь»), чтобы у клиента была определённость." }
+    ],
+    answers: [
+      { text: "Звонок завершён (перезвоним позже)", emoji: "📞", next: "end_reschedule" }
+    ],
+    objections: []
+  },
+
+  end_reschedule: {
+    title: "Звонок завершён — перезвон",
     badge: "Завершение",
     badgeType: "ending",
     isEnding: true,
     ref: "",
-    speech: `Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    speech: `[Звонок завершён. Перезвон запланирован на согласованное время.]`,
     comments: [
-      { type: "warn", discuss: true, text: "В исходном промте нет явной логики переноса — сейчас просто прощаемся. Возможно, нужно добавить перенос на конкретное время." }
+      { type: "info", text: "В системе фиксируется задача на повторный звонок." }
     ],
     answers: [
       { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
@@ -649,7 +835,7 @@ const STEPS = {
     answers: [
       { text: "Через другой банк / наличные / касса", emoji: "💬", next: "benefits" },
       { text: "Уже плачу зарплату через Сбер", emoji: "🏦", next: "already_sber" },
-      { text: "Нет сотрудников / не плачу зарплату", emoji: "👤", next: "benefits" }
+      { text: "Нет сотрудников / не плачу зарплату", emoji: "👤", next: "no_staff_clarify" }
     ],
     objections: []
   },
@@ -684,6 +870,68 @@ const STEPS = {
     answers: [
       { text: "Да, пришлите / расскажу партнёру", emoji: "✅", next: "end_success" },
       { text: "Не интересно", emoji: "✋", next: "end_polite_decline" }
+    ],
+    objections: []
+  },
+
+  no_staff_clarify: {
+    title: "Уточнение: самозанятые / подрядчики",
+    badge: "Уточнение",
+    ref: "",
+    speech: `<Имя клиента>, подскажите, вы ведёте бизнес полностью самостоятельно или привлекаете самозанятых, подрядчиков?`,
+    comments: [
+      { type: "info", text: "Уточняем — от этого зависит набор преимуществ. Если есть самозанятые, акцентируем бесплатные зачисления." }
+    ],
+    answers: [
+      { text: "Работаю полностью один", emoji: "👤", next: "benefits_solo" },
+      { text: "Привлекаю самозанятых / подрядчиков", emoji: "👥", next: "benefits_with_selfemployed" }
+    ],
+    objections: []
+  },
+
+  benefits_solo: {
+    title: "Преимущества (работает один)",
+    badge: "Выгоды",
+    ref: "п. 3 (соло)",
+    speech: `Понял(а) вас. Даже без сотрудников зарплатный проект даёт вам реальные преимущества:
+
+• Полное отсутствие комиссий за переводы себе на карту
+• Подключение и обслуживание карт — бесплатно, никаких скрытых платежей
+• Скидки по кредитам — за каждые 50 тыс. руб. ставка снижается на 0,1%, максимум скидка 2%
+• Бесплатный личный кабинет СберБизнес — можно всё проводить даже без расчётного счёта в Сбере
+
+По сути, вы получаете бесплатное решение с реальными бонусами. Как вам?`,
+    comments: [
+      { type: "info", text: "Для клиента без сотрудников и самозанятых: акцент на личные выгоды, убраны упоминания сотрудников." }
+    ],
+    answers: [
+      { text: "Да, звучит интересно", emoji: "✅", next: "enrollment_intro" },
+      { text: "Есть возражение / сомнение", emoji: "🤔", next: "objection_prompt" },
+      { text: "Нет, не нужно", emoji: "✋", next: "objection_prompt" }
+    ],
+    objections: []
+  },
+
+  benefits_with_selfemployed: {
+    title: "Преимущества (с самозанятыми)",
+    badge: "Выгоды",
+    ref: "п. 3 (самозан.)",
+    speech: `Понял(а) вас, тогда зарплатный проект будет вам особенно полезен:
+
+• Зачисления самозанятым — полностью без комиссии
+• Мгновенные переводы без комиссии на карту — деньги приходят через 10 минут
+• Подключение и обслуживание карт — бесплатно
+• Скидки по кредитам до 2% — за каждые 50 тыс. руб. зарплатного фонда ставка снижается на 0,1%
+• Бесплатный личный кабинет СберБизнес, даже без расчётного счёта
+
+По сути, вы и ваши подрядчики получаете бесплатное решение с реальными бонусами. Как вам?`,
+    comments: [
+      { type: "info", text: "Для клиента с самозанятыми: акцент на бесплатные зачисления самозанятым как ключевое преимущество." }
+    ],
+    answers: [
+      { text: "Да, звучит интересно", emoji: "✅", next: "enrollment_intro" },
+      { text: "Есть возражение / сомнение", emoji: "🤔", next: "objection_prompt" },
+      { text: "Нет, не нужно", emoji: "✋", next: "objection_prompt" }
     ],
     objections: []
   },
@@ -731,7 +979,24 @@ const STEPS = {
     answers: [
       { text: "Возражение отработано — клиент согласен", emoji: "✅", next: "enrollment_intro" },
       { text: "Клиент всё ещё сомневается", emoji: "🤔", next: "objection_prompt" },
-      { text: "Третий отказ — прощаемся", emoji: "🚫", next: "end_polite_decline" }
+      { text: "Третий отказ / неинтересно — прощаемся", emoji: "🚫", next: "end_polite_decline" },
+      { text: "Больше 3 возражений подряд — закрываем", emoji: "⛔", next: "end_max_objections" }
+    ],
+    objections: []
+  },
+
+  end_max_objections: {
+    title: "Превышен лимит возражений",
+    badge: "Завершение",
+    badgeType: "ending",
+    isEnding: true,
+    ref: "",
+    speech: `Понимаю вас, не буду настаивать. Благодарю за уделенное время. Хорошего дня и успешных сделок! До свидания.`,
+    comments: [
+      { type: "info", text: "Если клиент возражает более 3 раз подряд или прямо говорит, что ему неинтересно — вежливо прощаемся и закрываем задачу." }
+    ],
+    answers: [
+      { text: "Начать сценарий заново", emoji: "🔄", next: "greeting" }
     ],
     objections: []
   },
@@ -741,13 +1006,13 @@ const STEPS = {
     badge: "Оформление",
     badgeType: "success",
     ref: "п. 3 (доп.)",
-    speech: `Тогда давайте я сейчас помогу вам подключить зарплатный проект — это займёт буквально 5 минут, хорошо?`,
+    speech: `Тогда давайте я проведу вас по шагам прямо сейчас — это займёт буквально пару минут. Хорошо?`,
     comments: [
-      { type: "info", text: "Подтверждение готовности клиента оформить прямо сейчас. ЖДИ ответа." }
+      { type: "info", text: "Сначала предлагаем провести клиента по инструкции онлайн. Вариант «сам позже» или офис — только если клиент не может оформить прямо сейчас." }
     ],
     answers: [
       { text: "Хорошо, подключаем сейчас", emoji: "✅", next: "app_check" },
-      { text: "Неудобно / хочу сам позже", emoji: "📱", next: "self_enrollment" }
+      { text: "Неудобно сейчас / хочу сам позже", emoji: "📱", next: "self_enrollment" }
     ],
     objections: []
   },
@@ -981,9 +1246,12 @@ const STEPS = {
 };
 
 const STEP_ORDER = [
-  "greeting","end_not_convenient",
+  "greeting","wrong_person","no_answer_1","no_answer_2","end_no_contact",
+  "end_number_invalid","connection_lost_1","connection_lost_2",
+  "end_not_convenient","reschedule_later","end_reschedule",
   "presentation","already_sber","referral",
-  "benefits","objection_prompt","enrollment_intro",
+  "no_staff_clarify","benefits_solo","benefits_with_selfemployed",
+  "benefits","objection_prompt","end_max_objections","enrollment_intro",
   "self_enrollment","end_self_enrollment",
   "app_check","app_step_open","app_step_products","app_step_all_products",
   "app_step_connect","app_step_form","app_step_sms",
@@ -995,52 +1263,90 @@ const STEP_ORDER = [
 // GRAPH LAYOUT
 // ============================================================
 const GRAPH_NODES = {
-  greeting:            { x: 420, y: 40,  w: 150, h: 36 },
-  end_not_convenient:  { x: 180, y: 130, w: 200, h: 36 },
+  greeting:            { x: 500, y: 40,  w: 150, h: 36 },
+  // Telephony (left, top)
+  wrong_person:        { x: 20,  y: 40,  w: 160, h: 36 },
+  no_answer_1:         { x: 20,  y: 120, w: 190, h: 36 },
+  no_answer_2:         { x: 20,  y: 200, w: 190, h: 36 },
+  end_no_contact:      { x: 20,  y: 280, w: 200, h: 36 },
+  end_number_invalid:  { x: 230, y: 40,  w: 190, h: 36 },
+  connection_lost_1:   { x: 20,  y: 360, w: 200, h: 36 },
+  connection_lost_2:   { x: 20,  y: 440, w: 200, h: 36 },
+  // Reschedule
+  end_not_convenient:  { x: 280, y: 130, w: 170, h: 36 },
+  reschedule_later:    { x: 280, y: 220, w: 170, h: 36 },
+  end_reschedule:      { x: 280, y: 310, w: 180, h: 36 },
+  // Main flow
+  presentation:        { x: 640, y: 130, w: 150, h: 36 },
+  already_sber:        { x: 850, y: 230, w: 170, h: 36 },
+  referral:            { x: 900, y: 330, w: 170, h: 36 },
+  // No staff fork
+  no_staff_clarify:    { x: 480, y: 230, w: 200, h: 36 },
+  benefits_solo:       { x: 380, y: 330, w: 190, h: 36 },
+  benefits_with_selfemployed: { x: 600, y: 330, w: 200, h: 36 },
+  // Standard benefits
+  benefits:            { x: 700, y: 230, w: 170, h: 36 },
+  objection_prompt:    { x: 380, y: 430, w: 180, h: 36 },
+  end_max_objections:  { x: 160, y: 430, w: 200, h: 36 },
+  enrollment_intro:    { x: 600, y: 430, w: 180, h: 36 },
 
-  presentation:        { x: 560, y: 130, w: 150, h: 36 },
-  already_sber:        { x: 760, y: 230, w: 170, h: 36 },
-  referral:            { x: 820, y: 330, w: 170, h: 36 },
+  self_enrollment:     { x: 140, y: 530, w: 190, h: 36 },
+  end_self_enrollment: { x: 140, y: 620, w: 190, h: 36 },
 
-  benefits:            { x: 500, y: 230, w: 170, h: 36 },
-  objection_prompt:    { x: 300, y: 330, w: 180, h: 36 },
-  enrollment_intro:    { x: 520, y: 330, w: 180, h: 36 },
+  app_check:           { x: 600, y: 530, w: 170, h: 36 },
+  app_step_open:       { x: 400, y: 620, w: 170, h: 36 },
+  app_step_products:   { x: 400, y: 700, w: 170, h: 36 },
+  app_step_all_products:{x: 400, y: 780, w: 200, h: 36 },
+  app_step_connect:    { x: 400, y: 860, w: 170, h: 36 },
+  app_step_form:       { x: 400, y: 940, w: 170, h: 36 },
+  app_step_sms:        { x: 400, y: 1020, w: 170, h: 36 },
 
-  self_enrollment:     { x: 80,  y: 430, w: 190, h: 36 },
-  end_self_enrollment: { x: 80,  y: 520, w: 190, h: 36 },
+  browser_enrollment:  { x: 800, y: 620, w: 180, h: 36 },
+  unknown_question:    { x: 630, y: 1120, w: 180, h: 36 },
+  end_escalation:      { x: 630, y: 1200, w: 200, h: 36 },
 
-  app_check:           { x: 520, y: 430, w: 170, h: 36 },
-  app_step_open:       { x: 320, y: 520, w: 170, h: 36 },
-  app_step_products:   { x: 320, y: 600, w: 170, h: 36 },
-  app_step_all_products:{x: 320, y: 680, w: 200, h: 36 },
-  app_step_connect:    { x: 320, y: 760, w: 170, h: 36 },
-  app_step_form:       { x: 320, y: 840, w: 170, h: 36 },
-  app_step_sms:        { x: 320, y: 920, w: 170, h: 36 },
-
-  browser_enrollment:  { x: 720, y: 520, w: 180, h: 36 },
-  unknown_question:    { x: 550, y: 1020, w: 180, h: 36 },
-  end_escalation:      { x: 550, y: 1100, w: 200, h: 36 },
-
-  end_polite_decline:  { x: 300, y: 1020, w: 180, h: 36 },
-  end_success:         { x: 100, y: 1020, w: 180, h: 36 }
+  end_polite_decline:  { x: 380, y: 1120, w: 180, h: 36 },
+  end_success:         { x: 180, y: 1120, w: 180, h: 36 }
 };
 
 const GRAPH_EDGES = [
+  // Telephony states
+  { from: "greeting", to: "wrong_person", label: "Не тот" },
+  { from: "greeting", to: "no_answer_1", label: "Недозвон" },
+  { from: "greeting", to: "end_number_invalid", label: "Нет номера" },
+  { from: "greeting", to: "connection_lost_1", label: "Обрыв" },
+  { from: "no_answer_1", to: "no_answer_2", label: "Снова нет" },
+  { from: "no_answer_2", to: "end_no_contact", label: "Снова нет" },
+  { from: "connection_lost_1", to: "connection_lost_2", label: "Снова" },
+  { from: "connection_lost_2", to: "end_no_contact", label: "Нет связи" },
+  // Main flow
   { from: "greeting", to: "presentation", label: "Удобно" },
   { from: "greeting", to: "end_not_convenient", label: "Неудобно" },
+  { from: "end_not_convenient", to: "end_reschedule", label: "ОК" },
+  { from: "end_not_convenient", to: "reschedule_later", label: "Неудобно" },
+  { from: "reschedule_later", to: "end_reschedule", label: "" },
 
   { from: "presentation", to: "benefits", label: "Др. банк / касса" },
   { from: "presentation", to: "already_sber", label: "Уже Сбер" },
+  { from: "presentation", to: "no_staff_clarify", label: "Нет сотр." },
   { from: "already_sber", to: "referral", label: "Интересно" },
   { from: "already_sber", to: "end_polite_decline", label: "Нет" },
   { from: "referral", to: "end_success", label: "ОК" },
   { from: "referral", to: "end_polite_decline", label: "Нет" },
-
+  // No staff fork
+  { from: "no_staff_clarify", to: "benefits_solo", label: "Один" },
+  { from: "no_staff_clarify", to: "benefits_with_selfemployed", label: "Самозан." },
+  { from: "benefits_solo", to: "enrollment_intro", label: "Согласен" },
+  { from: "benefits_solo", to: "objection_prompt", label: "Возражение" },
+  { from: "benefits_with_selfemployed", to: "enrollment_intro", label: "Согласен" },
+  { from: "benefits_with_selfemployed", to: "objection_prompt", label: "Возражение" },
+  // Standard benefits
   { from: "benefits", to: "enrollment_intro", label: "Согласен" },
   { from: "benefits", to: "objection_prompt", label: "Возражение" },
   { from: "objection_prompt", to: "enrollment_intro", label: "Отработано" },
   { from: "objection_prompt", to: "objection_prompt", label: "Ещё" },
   { from: "objection_prompt", to: "end_polite_decline", label: "3-й раз" },
+  { from: "objection_prompt", to: "end_max_objections", label: ">3 возр." },
 
   { from: "enrollment_intro", to: "app_check", label: "ОК" },
   { from: "enrollment_intro", to: "self_enrollment", label: "Сам позже" },
@@ -1244,6 +1550,19 @@ function renderStepCard(step) {
       });
       html += '</div>';
     }
+
+    // Edge cases section
+    html += '<div class="objections-section" style="border-top: none; padding-top: 0;"><div class="objections-header"><span>&#9881;</span> Краевые сценарии (могут возникнуть на любом шаге)</div>';
+    ALL_EDGE_CASES.forEach(ec => {
+      html += `<div class="objection-item"><button class="objection-trigger" onclick="toggleObjection(this)">`;
+      html += `<span>${ec.trigger}</span>`;
+      html += `<span class="chevron">&#9660;</span></button>`;
+      html += `<div class="objection-body">`;
+      html += `<div class="speech-block"><div class="speech-label">Ответ ассистента:</div>`;
+      html += `<div class="speech-text">${formatSpeech(ec.response)}</div></div>`;
+      html += '</div></div>';
+    });
+    html += '</div>';
 
     html += '<div class="escalation-section">';
     html += `<button class="btn-escalation" onclick="goToStep('unknown_question')">`;
